@@ -35,8 +35,16 @@ const typeDefs = gql`
     id: ID
     firstName: String!
     lastName: String!
+    """
+    Is the sum of firstName + lastName as a string
+    """
     fullName: String!
   }
+
+  # 타입에 대한 설명을 """으로 감싸면 기재할 수 있음
+  """
+  Tweet object represent a resource for a Tweet
+  """
   type Tweet {
     id: ID
     text: String
@@ -54,6 +62,9 @@ const typeDefs = gql`
   # database 수정 목적으로 쓰이는 것들을 여기에 담음
   type Mutation {
     postTweet(text: String!, userId: ID!): Tweet!
+    """
+    Delete a Tweet if found, else returns false
+    """
     deleteTweet(id: ID!): Boolean!
   }
 `;
