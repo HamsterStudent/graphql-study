@@ -2,14 +2,29 @@ import { ApolloServer, gql } from "apollo-server";
 
 // 가짜 데이터베이스.
 // GraphQL에 알려줬던 형태대로 구현해야 함
-const tweets = [
+let tweets = [
   {
     id: "1",
     text: "hello",
+    userId: "2",
   },
   {
     id: "2",
     text: "hamster",
+    userId: "1",
+  },
+];
+
+let users = [
+  {
+    id: "1",
+    firstName: "ham",
+    lastName: "ster",
+  },
+  {
+    id: "2",
+    firstName: "king",
+    lastName: "burger",
   },
 ];
 
@@ -18,7 +33,9 @@ const tweets = [
 const typeDefs = gql`
   type User {
     id: ID
-    username: String
+    firstName: String!
+    lastName: String!
+    fullName: String!
   }
   type Tweet {
     id: ID
@@ -26,12 +43,15 @@ const typeDefs = gql`
     author: User
   }
 
+  # GET으로 호출하는 느낌
   type Query {
+    allUsers: [User!]!
     # 느낌표 표식은 graphQL에게 해당 필드들이 null이면 안된다고 알리는 역할
     allTweets: [Tweet!]!
     tweet(id: ID): Tweet
   }
 
+  # database 수정 목적으로 쓰이는 것들을 여기에 담음
   type Mutation {
     postTweet(text: String!, userId: ID!): Tweet!
     deleteTweet(id: ID!): Boolean!
@@ -43,6 +63,9 @@ const resolvers = {
   // 누군가 쿼리 타입의 tweet필드를 요청하면 이쪽으로 와서
   // 해당 함수를 호출한다.
   Query: {
+    allUsers() {
+      return users;
+    },
     allTweets() {
       return tweets;
     },
@@ -51,6 +74,32 @@ const resolvers = {
     // 해당 args들은 항상 resolver func의 두번째 args가 된다
     tweet(root, { id }) {
       return tweets.find((tweet) => tweet.id === id);
+    },
+  },
+  Mutation: {
+    postTweet(_, { text, userId }) {
+      const newTweet = {
+        id: tweets.length + 1,
+        text,
+      };
+      tweets.push(newTweet);
+      return newTweet;
+    },
+    deleteTweet(_, { id }) {
+      const tweet = tweets.find((tweet) => tweet.id === id);
+      if (!tweet) return false;
+      tweets.filter((tweet) => tweet.id !== id);
+      return true;
+    },
+  },
+  User: {
+    fullName({ firstName, lastName }) {
+      return `${firstName}${lastName}`;
+    },
+  },
+  Tweet: {
+    author({ userId }) {
+      return users.find((user) => user.id === userId);
     },
   },
 };
