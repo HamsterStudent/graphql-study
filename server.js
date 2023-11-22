@@ -1,4 +1,5 @@
 import { ApolloServer, gql } from "apollo-server";
+import fetch from "node-fetch";
 
 // 가짜 데이터베이스.
 // GraphQL에 알려줬던 형태대로 구현해야 함
@@ -53,10 +54,12 @@ const typeDefs = gql`
 
   # GET으로 호출하는 느낌
   type Query {
+    allMovies: [Movie!]!
     allUsers: [User!]!
     # 느낌표 표식은 graphQL에게 해당 필드들이 null이면 안된다고 알리는 역할
     allTweets: [Tweet!]!
     tweet(id: ID): Tweet
+    movie(id: ID!): Movie
   }
 
   # database 수정 목적으로 쓰이는 것들을 여기에 담음
@@ -66,6 +69,30 @@ const typeDefs = gql`
     Delete a Tweet if found, else returns false
     """
     deleteTweet(id: ID!): Boolean!
+  }
+  type Movie {
+    id: Int!
+    url: String!
+    imdb_code: String!
+    title: String!
+    title_english: String!
+    title_long: String!
+    slug: String!
+    year: Int!
+    rating: Float!
+    runtime: Float!
+    genres: [String]!
+    summary: String
+    description_full: String!
+    synopsis: String
+    yt_trailer_code: String!
+    language: String!
+    mpa_rating: String!
+    background_image: String!
+    background_image_original: String!
+    small_cover_image: String!
+    medium_cover_image: String!
+    large_cover_image: String!
   }
 `;
 
@@ -85,6 +112,24 @@ const resolvers = {
     // 해당 args들은 항상 resolver func의 두번째 args가 된다
     tweet(root, { id }) {
       return tweets.find((tweet) => tweet.id === id);
+    },
+    allMovies: async () => {
+      return fetch("https://yts.mx/api/v2/list_movies.json", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((json) => json.data.movies);
+    },
+    movie(_, { id }) {
+      return fetch(`https://yts.mx/api/v2/movie_details.json?movie_id=${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((json) => json.data.movie);
     },
   },
   Mutation: {
